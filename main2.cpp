@@ -26,12 +26,14 @@ int main(int argc, char** argv) {
 seastar::future<> service_loop() {
     buffer[CHUNK_SIZE - 1] = '\0';
 
-    // UDP channel
-    auto channel = seastar::make_udp_channel();
-
-    return seastar::do_with(std::move(channel), [](auto& channel) {
-        return seastar::keep_doing([&channel] {
-            return channel.send(seastar::make_ipv4_address({2121}), seastar::temporary_buffer<char>(buffer.data(), CHUNK_SIZE));
+    for(int i = 0; i < 5; i++) {
+        (void) seastar::do_with(seastar::make_udp_channel(), [](auto& channel) {
+            return seastar::keep_doing([&channel] {
+                return channel.send(seastar::make_ipv4_address({2121}), seastar::temporary_buffer<char>(buffer.data(), CHUNK_SIZE));
+            });
         });
-    });
+    }
+
+
+    return seastar::make_ready_future<>();
 }

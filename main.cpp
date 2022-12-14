@@ -25,6 +25,18 @@ seastar::future<> service_loop() {
     // Create udp_channel
     auto channel = seastar::make_udp_channel(seastar::make_ipv4_address({2121}));
 
+    // Catch SIGZSTP signal
+    seastar::engine().handle_signal(SIGTSTP, [&channel] {
+        channel.shutdown_input();
+        channel.shutdown_output();
+        seastar::engine_exit();
+    });
+
+    // Catch seg fault
+    seastar::engine().handle_signal(SIGSEGV, [&channel] {
+        seastar::engine_exit();
+    });
+
     // Get number of a shard.
     using namespace std::chrono_literals;
     timer.set_callback([] {
